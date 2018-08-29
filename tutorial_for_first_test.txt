@@ -1,0 +1,4 @@
+One can use input.txt and output.txt files
+the thickness of the artificial sample given the output  file is 5 mm, its epsilon 4, it has one Lorentz Oscillators at 500 GHz with a width of 100 GHz. Its oscillators strentgh is 0.001. There is no Drude term to find.
+
+If one take 1% of uncertainty on the thickness and +-50% on the other parameters he should find the good result in about 1 minute.

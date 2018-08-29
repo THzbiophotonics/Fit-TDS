@@ -1,0 +1,46 @@
+﻿fit@TDS Installation guide for windows
+
+
+
+To use the fit@TDS code on Windows one will need Python version 2.7 or higher with a number of properly installed packages:
+NumPy - http://www.numpy.org/
+pyOpt - https://github.com/madebr/pyOpt and http://pyopt.org/ (we hope that this website will be available again soon)
+pyswarm – https://pythonhosted.org/pyswarm/
+We note that the stable work on Python 3 is not guaranteed (though it would be appreciated if one modifies the code for the proper work on Python 3 as well)
+
+
+
+For unexperienced Python users (or for the lazy ones) we propose the fallowing procedure to prepare your PC to run the code on it:
+
+1) Check that Python and/or Anaconda are not installed on your PC, otherwise we advise to uninstall the existing version so on not to get any misleading dependencies after the following steps. Reboot the PC.
+
+2) We advise to use Anaconda – a free and open source distribution of the Python programming language, which includes a number of useful programs and allows an easy package management.
+Download the Anaconda installer with Python 2.7* version for Windows respecting the bit architecture of your processor: https://www.anaconda.com/download/
+
+3) Run the installer. We advise to do it under administrator rights. We suggest to install anaconda for all users on the PC and to accept the destination folder (normally C:\ProgramData\Anaconda2) proposed by the installer. We also suggest not to accept any of the advanced options or add-ons during the installation process. Reboot the PC after the installation is over.
+
+4) Run Anaconda. Open the Environments menu. Check that the NumPy package is already installed.
+
+5) Through the Environments menu find and install the following packages:
+mpi4py, for parallel computing
+*** Swig compiler (version 1.3 and higher)
+*** MinGW compiler (other c/FORTRAN compiler may also be used) 
+
+6) Anaconda distribution includes the Anaconda Prompt which we suggest to use for the installation of the pyOpt and pyswarm packages:
+pyOpt is an object-oriented framework for formulating and solving nonlinear constrained optimization problems. It can be installed by the following command:
+conda install -c mutirri pyopt
+The pyswarm package is a gradient-free, evolutionary optimization package for python that supports constraints. Your Anaconda distribution normally includes the pip package, so install the pyswarm package by the following command:
+pip install --upgrade pyswarm
+
+7) Reboot the computer. 
+
+8)unzip the fit@tds files (fit@TDS.py, epsillon3.py and ifinalplot.py)
+
+Congratulations, now you should be able to run the fit@tds code!
+
+To do so one can use the Spyder environment (also included to the Anaconda distribution) or just to run the the fit@TDS.py by the following two commands in the Anaconda Prompt:
+Write the path to the folder containing the fit@TDS.py file, for example by
+cd C:\Users\Admin\Documents\fit@tds
+
+Run the file: 
+fit@tds.py
