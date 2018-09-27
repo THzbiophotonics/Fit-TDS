@@ -38,7 +38,7 @@ def plotinput(monepsilon,myinputdata,myinputdatafromfile,z,myglobalparameters):
 	plt.xlabel('Frequency [Hz]')
 	plt.ylabel('Spectral density of energy [dB]')
 	plt.legend()
-   ##############################################################################
+	##############################################################################
 	##############################################################################
 
 	plt.figure("Time trace", figsize=(12, 5))
