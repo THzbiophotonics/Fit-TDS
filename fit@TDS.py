@@ -28,12 +28,12 @@ c = 2.998e8
 # =============================================================================
 # External Python modules (serves for algo #3)
 # =============================================================================
-try:
-    from mpi4py import MPI
-    comm = MPI.COMM_WORLD
-    myrank = comm.Get_rank()
-except:
-    raise ImportError('mpi4py is required for parallelization')
+try: # this can be commented if mpi4py was not installed successfully 
+    from mpi4py import MPI # this can be commented if mpi4py was not installed successfully 
+    comm = MPI.COMM_WORLD # this can be commented if mpi4py was not installed successfully 
+    myrank = comm.Get_rank() # this can be commented if mpi4py was not installed successfully 
+except: # this can be commented if mpi4py was not installed successfully 
+    raise ImportError('mpi4py is required for parallelization') # this can be commented if mpi4py was not installed successfully 
 #end
 # =============================================================================
 # Extension modules
@@ -433,8 +433,8 @@ if  algo==2:
 	alpso_none.setOption('printOuterIters',1)
 	alpso_none.setOption('HoodSize',swarmsize/100)
 	[fopt, xopt, inform]=alpso_none(opt_prob)
-	if myrank == 0:
-		print(opt_prob.solution(0))
+	if myrank == 0:# this can be commented if mpi4py was not installed successfully 
+		print(opt_prob.solution(0))# this can be commented if mpi4py was not installed successfully 
 	#end
 ##############################################################################
 ##############################################################################
