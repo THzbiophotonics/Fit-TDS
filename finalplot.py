@@ -85,7 +85,7 @@ def plotall(myinputdata,myinputdatafromfile,myfitteddata,monepsilon,myglobalpara
 	plt.legend()
 
 	plt.subplot(224)
-	plt.plot(myglobalparameters.freq, np.sqrt(myfitteddata.epsilon).imag-np.sqrt(monepsilon).imag, 'r-', label='in the imaginary part of refractive index')
+	plt.plot(myglobalparameters.freq, np.sqrt(myfitteddata.epsilon).imag+np.sqrt(monepsilon).imag, 'r-', label='in the imaginary part of refractive index')
 	plt.xlabel('Frequency [Hz]')
 	plt.ylabel('Discrepency')
 	plt.legend()
