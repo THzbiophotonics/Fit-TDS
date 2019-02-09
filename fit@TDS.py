@@ -208,7 +208,7 @@ pathwithoutsample=tkFileDialog.askopenfilename(parent=root)
 
 print("\nPlease choose the input file for the pulse with sample\n")
 pathwithsample=tkFileDialog.askopenfilename(parent=root)
-
+root.destroy()
 mesdata=np.loadtxt(pathwithsample)
 
 myinputdatafromfile=inputdatafromfile
@@ -474,4 +474,5 @@ pathoutpufreq=tkFileDialog.asksaveasfilename()
 fileoutputfreq=open(pathoutpufreq,'w')
 np.savetxt(fileoutputfreq,outputfreq,header="Please cite this paper in any communication about any use of fit@tds : \n THz-TDS time-trace analysis for the extraction of material and metamaterial parameters \n Romain Peretti, Sergey Mitryukovskiy, Kevin Froberger, Aniss Mebarki, Sophie Eliet, Mathias Vanwolleghem, and Jean-Francois Lampin \n IEEE Transactions on Terahertz Science and Technology, Volume 9, Issue 2 \n DOI: 10.1109/TTHZ.2018.2889227 \n \n Freq \t E-field \t real part of fitted epsilon \t imaginary part of fitted epsilon \t real part of fitted n \t imaginary part of fitted n \t real part of initial epsilon \t imaginary part of initial epsilon \t real part of initial n\t imaginary part of initial n")
 fileoutputfreq.close()
+root.destroy()
 root.mainloop()
