@@ -34,6 +34,9 @@ try: # this can be commented if mpi4py was not installed successfully
     myrank = comm.Get_rank() # this can be commented if mpi4py was not installed successfully 
 except: # this can be commented if mpi4py was not installed successfully 
     raise ImportError('mpi4py is required for parallelization') # this can be commented if mpi4py was not installed successfully 
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
 #end
 # =============================================================================
 # Extension modules
@@ -200,225 +203,247 @@ def objfunc(x):
 # =============================================================================
 # retrieval of the data
 # =============================================================================
-
-root =tk.Tk()
-
-print("\nPlease choose the input file for the pulse without sample\n")
-pathwithoutsample=tkFileDialog.askopenfilename(parent=root)
-
-print("\nPlease choose the input file for the pulse with sample\n")
-pathwithsample=tkFileDialog.askopenfilename(parent=root)
-root.destroy()
-mesdata=np.loadtxt(pathwithsample)
-
-myinputdatafromfile=inputdatafromfile
-myglobalparameters=globalparameters
-myinputdatafromfile.PulseInittotal=np.loadtxt(pathwithoutsample)
-
-myglobalparameters.t=myinputdatafromfile.PulseInittotal[:,0]*1e-12 #this assumes input files are in ps
-nsample=len(myglobalparameters.t)
-myinputdatafromfile.Pulseinit=myinputdatafromfile.PulseInittotal[:,1]
-dt=myglobalparameters.t.item(2)-myglobalparameters.t.item(1)
-myglobalparameters.freq = np.fft.rfftfreq(nsample, dt)
-myglobalparameters.w=myglobalparameters.freq*2*np.pi
-myinputdatafromfile.Spulseinit=(np.fft.rfft((myinputdatafromfile.Pulseinit)))
-
-z= sanitised_input("\nEnter a value for the thickness in meters [m]:", float, 0)
-deltaz= sanitised_input("\nEnter a value for the thickness uncertainty in %:", float, 0)/100
-
-myinputdata=mydata(mesdata[:,1],myinputdatafromfile.Spulseinit,z)
-monepsilon=dielcal(np.fft.rfft((mesdata[:,1]))/myinputdatafromfile.Spulseinit,z,myglobalparameters)
-
-##############################################################################
-#parameters for the algorithm 
-##############################################################################
-"""parameters for the algorithm"""
-swarmsize=1000
-maxiter=20
-algo=2 
-#algorithm 1 stands for NumPy optimize swarm particle, 
-#algorithm 2 - for PyOpt swarm particle ALPSO without parallelization // 3 - ALPSO with parallelization //
-
-# =============================================================================
-# calculating the delay to infer the index
-# =============================================================================
-deltaT=myglobalparameters.t[np.argmax(myinputdata.pulse)]-myglobalparameters.t[np.argmax(myinputdatafromfile.Pulseinit)] #retard entre les deux max
-print("############################################################################################")
-print("############################################################################################")
-print("Delay between the two maxima of the pulses:")
-print("delta T="+ str(deltaT))
-print("n="+ str(1+deltaT*c/z)) #indice qui en derive
-print("epsillon="+ str(np.square(1+deltaT*c/z))) #indice qui en derive
-print("############################################################################################")
-print("############################################################################################")
-deltaTTT=myglobalparameters.t[np.argmin(myinputdata.pulse)]-myglobalparameters.t[np.argmin(myinputdatafromfile.Pulseinit)] #retard entre les deux max
-print("Delay between the two minima of the pulses:")
-print("delta T="+ str(deltaTTT))
-print("n="+ str(1+deltaTTT*c/z)) #indice qui en derive
-print("epsillon="+ str(np.square(1+deltaTTT*c/z))) #indice qui en derive
-print("############################################################################################")
-print("############################################################################################")
-deltaTT=np.sum(np.square(myinputdata.pulse)*myglobalparameters.t)/np.sum(np.square(myinputdata.pulse))-np.sum(np.square		(myinputdatafromfile.Pulseinit)*myglobalparameters.t)/np.sum(np.square(myinputdatafromfile.Pulseinit))   #retard entre les deux barycentre, attention pour que ca foncionne il faut que le rapport signal bruit soit le meme dans les deux cas !!
-print("############################################################################################")
-print("############################################################################################")
-print("Delay between the two energy barycenter of the pulses\n (beware that noise brings it to the middle for each one):")
-print("delta T="+ str(deltaTT))
-print("n="+ str(deltaTT*c/z)) #indice qui en derive
-print("epsillon="+ str(np.square(deltaTT*c/z))) #indice qui en derive
-print("############################################################################################")
-print("############################################################################################")
-###############################################################################
-###############################################################################
-#Ploting of the input. 
-#The goal will be then to get proper initial values for parameters.
-###############################################################################
-###############################################################################
-plotinput(monepsilon,myinputdata,myinputdatafromfile,z,myglobalparameters)
-###############################################################################
-###############################################################################
-mymodelmat=1
-#we may add here the choice between Drude Lorentz and Debye
-#we may add if one would want to put a scattering term 
-
-mymodelstruct= sanitised_input("\nWich model do you whant to use for the photonic structure ? \n\t 1 - Transmission Fabry-Perot\n\t 2 - Transmission Fabry-Perot with a resonator (TDCMT) \n\t\t", int, 1,2)
-zvariable= sanitised_input("Is the thickness a variable for the fit ? \n\t 0 - NO \n\t 1 - Yes \n\t\t", int, 0,1)
-
-
-###############################################################################
-#Input questions
-###############################################################################
-#short description of drude model
-print("\n Drude model depicts the permitivity Epsillon as Eps =Eps_0- Omega_p^2/(Omega^2-j*gamma*omega) ")
-
-isdrude=sanitised_input("Do you want to have a Drude term in the model ? \n\t 0 - NO \n\t 1 - Yes \n\t\t", int, 0,1)
-
-#short description of Lorentz model
-print("\n Lorentz model depicts the permitivity Epsillon as Eps = Eps_0 +[ Delta_epsillon*Omega_0^2]/[Omega_0^2+j*gamma*Omega-Omega^2] ")
-
-
-print("")
-
-n= sanitised_input("\nEnter a value for the number of Lorentz oscillators in the model: \t", int, 0)
-
-if mymodelstruct==2:
-	for i in range(0,1):
-		myvariables=["Omega resonator/metasurface_"+str(i), "Tau 0 resonator/metasurface_" +str(i),"Tau 1 resonator/metasurface_"+str(i),"Tau 2 resonator/metasurface_"+str(i),"delta Theta resonator/metasurface_"+str(i) ]
-		myunits=["Radian / s", "s" ,"s","s","Radian"]
-		mydescription=["central angular frequency of the mode of the resonator # "+str(i), "Absorption life time of the mode of the resonator # " +str(i),"Forward coupling lifetime of the mode of the resonator # "+str(i),"Backward coupling lifetuime of the mode of the resonator # "+str(i),"Phase between Forward and backward coupling for the resontator # "+str(i) ]
-else:
-	myvariables=[]
-	myunits=[]
-	mydescription=[]
-
-myvariables=myvariables+["epsillon_inf"]
-myunits=myunits+["Usual permitivity unit without dimension (square of a refractive index)"]
-mydescription=mydescription+["Permitivity at very high frequency frequency"]
-if isdrude==1:
-	myvariables=myvariables+["Omega_p"]+["gamma"]
-	myunits=myunits+["Radian/s"]+["Radian/s"]
-	mydescription=mydescription+["Drude Model Plasma frequency : [ (N * (q^2))  /  (Epsillon_0  * m_e) ]"]+["Drude damping damping rate"]
-for i in range(0,n):
-	myvariables=myvariables+["Delta_Epsillon_"+str(i), "1/(2pi)*Omega0_" +str(i),"1/(2pi)*Gamma_"+str(i) ] 
-	myunits=myunits+["Usual permitivity unit without dimension (square of a refractive index)", "Hz","Hz" ]
-	mydescription=mydescription+["Oscillator strentgh of the mode # ", "Frequency of the mode # " +str(i),"Linewidth of the mode # "+str(i) ] 
-drudeinput=np.ones(len(myvariables))
-lb=np.ones(len(myvariables))
-up=np.ones(len(myvariables))
-compteur=0
-
-for i in myvariables:
-	while True:
-		# short description of the variable		
-		print("\n"+str(i)+" is the "+str(mydescription[compteur]) )
-		# unit of the variable
-		print("\n"+str(i)+" is expressed in "+str(myunits[compteur]))
-
-		drudeinput[compteur]= sanitised_input("\nEnter a value for "+ str(i)+" in SI unit: \t", float, 0)
-		lb[compteur]= sanitised_input("Enter a value for the minimum value of "+ str(i)+": \t", float, 0)
-		up[compteur]= sanitised_input("Enter a value for the maximum value of "+ str(i)+": \t", float, 0)
-		if  up[compteur]<=lb[compteur]:
-        		print("The maximum of "+ str(i)+" must be strictly higher than its minimum")
-        		continue
-		elif  up[compteur]<drudeinput[compteur]:
-			print("The maximum of "+ str(i)+" must be higher than its value")
-        		continue
-		elif  lb[compteur]>drudeinput[compteur]:
-			print("The minimum of "+ str(i)+" must be lower than its value")
-        		continue
-    		else:
-		        break
-	
-	compteur=compteur+1
-
-# =============================================================================
-interm=0  #this is not only in case of a simulated sample
-
-if zvariable==1:
-	drudeinput=np.append([z],drudeinput)
-	lb=np.append([z*(1-deltaz)],lb)
-	up=np.append([z*(1+deltaz)],up)
-	interm=interm+1                #this is not only in case of simulated sample
-if mymodelstruct==2:              #if one use resonator tdcmt 
-	interm=interm+5                #this is not only in case of simulated sample
-if  mymodelmat==2:                #if one use a variable thickness
-	drudeinput=np.append([Scatfreq],drudeinput)
-	interm=interm+1                #this is not only in case of simulated sample
-
-# =============================================================================
-# preparation of the input for the algorithm
-# =============================================================================
-print("############################################################################################")
-print("############################################################################################")
-print("begining the calculation please wait ...")
-print("############################################################################################")
-print("############################################################################################")
-
-# Instantiate Optimization Problem 
-
-if algo>1:
-	interm2=0
-	opt_prob = Optimization('Dielectric modeling based on TDS pulse fitting',objfunc)
-	if zvariable==1:
-		opt_prob.addVar('thickness','c',lower=lb[0],upper=up[0],value=drudeinput[0])
-		interm2=interm2+1
-	if mymodelstruct==2:       #in case of TDCMT
-		opt_prob.addVar('w0 tdcmt','c',lower=lb[0+interm2],upper=up[0+interm2],value=drudeinput[0+interm2])
-		opt_prob.addVar('tau0','c',lower=lb[1+interm2],upper=up[1+interm2],value=drudeinput[1+interm2])
-		opt_prob.addVar('tau1','c',lower=lb[2+interm2],upper=up[2+interm2],value=drudeinput[2+interm2])
-		opt_prob.addVar('tau2','c',lower=lb[3+interm2],upper=up[3+interm2],value=drudeinput[3+interm2])
-		opt_prob.addVar('delta theta','c',lower=lb[4+interm2],upper=up[4+interm2],value=drudeinput[4+interm2])
-		interm2=interm2+5
-
-	opt_prob.addVar('eps inf','c',lower=lb[0+interm2],upper=up[0+interm2],value=drudeinput[0+interm2])
-	if isdrude==1:
-		opt_prob.addVar('omega p','c',lower=lb[1+interm2],upper=up[1+interm2],value=drudeinput[1+interm2])
-		opt_prob.addVar('gamma','c',lower=lb[2+interm2],upper=up[2+interm2],value=drudeinput[2+interm2])
-		interm2=interm2+2
-
-	for i in range(0,n):
-		opt_prob.addVar('chi'+str(i),'c',lower=lb[1+interm2+3*i],upper=up[1+interm2+3*i],value=drudeinput[1+interm2+3*i])#pour drude
-		opt_prob.addVar('w'+str(i),'c',lower=lb[2+interm2+3*i],upper=up[2+interm2+3*i],value=drudeinput[2+interm2+3*i])#pour drude
-		opt_prob.addVar('gamma'+str(i),'c',lower=lb[3+interm2+3*i],upper=up[3+interm2+3*i],value=drudeinput[3+interm2+3*i])#pour drude
-	
-	opt_prob.addObj('f')
-	#opt_prob.addCon('g1','i') #possibility to add constraintes
-	#opt_prob.addCon('g2','i')
+if myrank == 0:
+    root =tk.Tk()
+    print("\nPlease choose the input file for the pulse without sample\n")
+    pathwithoutsample=tkFileDialog.askopenfilename(parent=root)
     
-##############################################################################
-##############################################################################
-# solving the problem with the function in scipy.optimize
-##############################################################################
-##############################################################################
-if  algo==1:
-	xopt,fopt=pso(monerreur,lb,up,swarmsize=swarmsize,minfunc=1e-18,minstep=1e-8,debug=1,phip=0.5,phig=0.5,maxiter=maxiter) 
-##############################################################################
-##############################################################################
-# solving the problem with yopt
-##############################################################################
-##############################################################################
+    print("\nPlease choose the input file for the pulse with sample\n")
+    pathwithsample=tkFileDialog.askopenfilename(parent=root)
+    root.destroy()
+    mesdata=np.loadtxt(pathwithsample)
+    
+    myinputdatafromfile=inputdatafromfile
+    myglobalparameters=globalparameters
+    myinputdatafromfile.PulseInittotal=np.loadtxt(pathwithoutsample)
+    
+    myglobalparameters.t=myinputdatafromfile.PulseInittotal[:,0]*1e-12 #this assumes input files are in ps
+    nsample=len(myglobalparameters.t)
+    myinputdatafromfile.Pulseinit=myinputdatafromfile.PulseInittotal[:,1]
+    dt=myglobalparameters.t.item(2)-myglobalparameters.t.item(1)
+    myglobalparameters.freq = np.fft.rfftfreq(nsample, dt)
+    myglobalparameters.w=myglobalparameters.freq*2*np.pi
+    myinputdatafromfile.Spulseinit=(np.fft.rfft((myinputdatafromfile.Pulseinit)))
+    
+    z= sanitised_input("\nEnter a value for the thickness in meters [m]:", float, 0)
+    deltaz= sanitised_input("\nEnter a value for the thickness uncertainty in %:", float, 0)/100
+    
+    myinputdata=mydata(mesdata[:,1],myinputdatafromfile.Spulseinit,z)
+    monepsilon=dielcal(np.fft.rfft((mesdata[:,1]))/myinputdatafromfile.Spulseinit,z,myglobalparameters)
+    
+    ##############################################################################
+    #parameters for the algorithm 
+    ##############################################################################
+    """parameters for the algorithm"""
+    swarmsize=1000
+    maxiter=20
+    algo=2 
+    #algorithm 1 stands for NumPy optimize swarm particle, 
+    #algorithm 2 - for PyOpt swarm particle ALPSO without parallelization // 3 - ALPSO with parallelization //
+    
+    # =============================================================================
+    # calculating the delay to infer the index
+    # =============================================================================
+    deltaT=myglobalparameters.t[np.argmax(myinputdata.pulse)]-myglobalparameters.t[np.argmax(myinputdatafromfile.Pulseinit)] #retard entre les deux max
+    print("############################################################################################")
+    print("############################################################################################")
+    print("Delay between the two maxima of the pulses:")
+    print("delta T="+ str(deltaT))
+    print("n="+ str(1+deltaT*c/z)) #indice qui en derive
+    print("epsillon="+ str(np.square(1+deltaT*c/z))) #indice qui en derive
+    print("############################################################################################")
+    print("############################################################################################")
+    deltaTTT=myglobalparameters.t[np.argmin(myinputdata.pulse)]-myglobalparameters.t[np.argmin(myinputdatafromfile.Pulseinit)] #retard entre les deux max
+    print("Delay between the two minima of the pulses:")
+    print("delta T="+ str(deltaTTT))
+    print("n="+ str(1+deltaTTT*c/z)) #indice qui en derive
+    print("epsillon="+ str(np.square(1+deltaTTT*c/z))) #indice qui en derive
+    print("############################################################################################")
+    print("############################################################################################")
+    deltaTT=np.sum(np.square(myinputdata.pulse)*myglobalparameters.t)/np.sum(np.square(myinputdata.pulse))-np.sum(np.square		(myinputdatafromfile.Pulseinit)*myglobalparameters.t)/np.sum(np.square(myinputdatafromfile.Pulseinit))   #retard entre les deux barycentre, attention pour que ca foncionne il faut que le rapport signal bruit soit le meme dans les deux cas !!
+    print("############################################################################################")
+    print("############################################################################################")
+    print("Delay between the two energy barycenter of the pulses\n (beware that noise brings it to the middle for each one):")
+    print("delta T="+ str(deltaTT))
+    print("n="+ str(deltaTT*c/z)) #indice qui en derive
+    print("epsillon="+ str(np.square(deltaTT*c/z))) #indice qui en derive
+    print("############################################################################################")
+    print("############################################################################################")
+    ###############################################################################
+    ###############################################################################
+    #Ploting of the input. 
+    #The goal will be then to get proper initial values for parameters.
+    ###############################################################################
+    ###############################################################################
+    plotinput(monepsilon,myinputdata,myinputdatafromfile,z,myglobalparameters)
+    ###############################################################################
+    ###############################################################################
+    mymodelmat=1
+    #we may add here the choice between Drude Lorentz and Debye
+    #we may add if one would want to put a scattering term 
+    
+    mymodelstruct= sanitised_input("\nWich model do you whant to use for the photonic structure ? \n\t 1 - Transmission Fabry-Perot\n\t 2 - Transmission Fabry-Perot with a resonator (TDCMT) \n\t\t", int, 1,2)
+    zvariable= sanitised_input("Is the thickness a variable for the fit ? \n\t 0 - NO \n\t 1 - Yes \n\t\t", int, 0,1)
+    
+    
+    ###############################################################################
+    #Input questions
+    ###############################################################################
+    #short description of drude model
+    print("\n Drude model depicts the permitivity Epsillon as Eps =Eps_0- Omega_p^2/(Omega^2-j*gamma*omega) ")
+    
+    isdrude=sanitised_input("Do you want to have a Drude term in the model ? \n\t 0 - NO \n\t 1 - Yes \n\t\t", int, 0,1)
+    
+    #short description of Lorentz model
+    print("\n Lorentz model depicts the permitivity Epsillon as Eps = Eps_0 +[ Delta_epsillon*Omega_0^2]/[Omega_0^2+j*gamma*Omega-Omega^2] ")
+    
+    
+    print("")
+    
+    n= sanitised_input("\nEnter a value for the number of Lorentz oscillators in the model: \t", int, 0)
+    
+    if mymodelstruct==2:
+        for i in range(0,1):
+            myvariables=["Omega resonator/metasurface_"+str(i), "Tau 0 resonator/metasurface_" +str(i),"Tau 1 resonator/metasurface_"+str(i),"Tau 2 resonator/metasurface_"+str(i),"delta Theta resonator/metasurface_"+str(i) ]
+            myunits=["Radian / s", "s" ,"s","s","Radian"]
+            mydescription=["central angular frequency of the mode of the resonator # "+str(i), "Absorption life time of the mode of the resonator # " +str(i),"Forward coupling lifetime of the mode of the resonator # "+str(i),"Backward coupling lifetuime of the mode of the resonator # "+str(i),"Phase between Forward and backward coupling for the resontator # "+str(i) ]
+    else:
+        myvariables=[]
+        myunits=[]
+        mydescription=[]
+    
+    myvariables=myvariables+["epsillon_inf"]
+    myunits=myunits+["Usual permitivity unit without dimension (square of a refractive index)"]
+    mydescription=mydescription+["Permitivity at very high frequency frequency"]
+    if isdrude==1:
+        myvariables=myvariables+["Omega_p"]+["gamma"]
+        myunits=myunits+["Radian/s"]+["Radian/s"]
+        mydescription=mydescription+["Drude Model Plasma frequency : [ (N * (q^2))  /  (Epsillon_0  * m_e) ]"]+["Drude damping damping rate"]
+    for i in range(0,n):
+        myvariables=myvariables+["Delta_Epsillon_"+str(i), "1/(2pi)*Omega0_" +str(i),"1/(2pi)*Gamma_"+str(i) ] 
+        myunits=myunits+["Usual permitivity unit without dimension (square of a refractive index)", "Hz","Hz" ]
+        mydescription=mydescription+["Oscillator strentgh of the mode # ", "Frequency of the mode # " +str(i),"Linewidth of the mode # "+str(i) ] 
+    drudeinput=np.ones(len(myvariables))
+    lb=np.ones(len(myvariables))
+    up=np.ones(len(myvariables))
+    compteur=0
+    
+    prompt=1
+    if prompt:
+        compteur=0
+    
+        for i in myvariables:
+            while True:
+                drudeinput[compteur]= sanitised_input("\nEnter a value for "+ str(i)+" in SI unit: \t", float, 0)
+                lb[compteur]= sanitised_input("Enter a value for the minimum value of "+ str(i)+": \t", float, 0)
+                up[compteur]= sanitised_input("Enter a value for the maximum value of "+ str(i)+": \t", float, 0)
+                if  up[compteur]<=lb[compteur]:
+                        print("The maximum of "+ str(i)+" must be strictly higher than its minimum")
+                        continue
+                elif  up[compteur]<drudeinput[compteur]:
+                        print("The maximum of "+ str(i)+" must be higher than its value")
+                        continue
+                elif  lb[compteur]>drudeinput[compteur]:
+                        print("The minimum of "+ str(i)+" must be lower than its value")
+                        continue
+                else:
+                        break
+        
+            compteur=compteur+1
+    else:
+        root2 =tk.Tk()
+        print("\nPlease choose the file where all the parameters for the model are\n")
+        pathparam=tkFileDialog.askopenfilename(parent=root2)
+        mesparam=np.loadtxt(pathparam)
+        drudeinput=np.array(mesparam[:, 0])
+        lb=np.array(mesparam[:, 1])
+        up=np.array(mesparam[:, 2])
+        root2.destroy()
+        root2.mainloop()
+    
+    
+    # =============================================================================
+    #interm=0  #this is not only in case of a simulated sample
+    #
+    #if zvariable==1:
+    #	drudeinput=np.append([z],drudeinput)
+    #	lb=np.append([z*(1-deltaz)],lb)
+    #	up=np.append([z*(1+deltaz)],up)
+    #	interm=interm+1                #this is not only in case of simulated sample
+    #if mymodelstruct==2:              #if one use resonator tdcmt 
+    #	interm=interm+5                #this is not only in case of simulated sample
+    #if  mymodelmat==2:                #if one use a variable thickness
+    #	drudeinput=np.append([Scatfreq],drudeinput)
+    #	interm=interm+1                #this is not only in case of simulated sample
+    
+    # =============================================================================
+    # preparation of the input for the algorithm
+    # =============================================================================
+    print("############################################################################################")
+    print("############################################################################################")
+    print("begining the calculation please wait ...")
+    print("############################################################################################")
+    print("############################################################################################")
+    
+    # Instantiate Optimization Problem 
+    inputsize=np.size(lb)   
+inputsize= comm.bcast(inputsize, root=0) 
+if myrank != 0:
+    lb=np.empty(inputsize, dtype='f')
+    up=np.empty(inputsize, dtype='f')
+    drudeinput=np.empty(inputsize, dtype='f')
+comm.Bcast(lb, root=0)
+comm.Bcast(drudeinput, root=0)
+comm.Bcast(up, root=0)
+
+ 
+if algo>1:
+    interm2=0
+    opt_prob = Optimization('Dielectric modeling based on TDS pulse fitting',objfunc)
+    if zvariable==1:
+        opt_prob.addVar('thickness','c',lower=lb[0],upper=up[0],value=drudeinput[0])
+        interm2=interm2+1
+    if mymodelstruct==2:       #in case of TDCMT
+        opt_prob.addVar('w0 tdcmt','c',lower=lb[0+interm2],upper=up[0+interm2],value=drudeinput[0+interm2])
+        opt_prob.addVar('tau0','c',lower=lb[1+interm2],upper=up[1+interm2],value=drudeinput[1+interm2])
+        opt_prob.addVar('tau1','c',lower=lb[2+interm2],upper=up[2+interm2],value=drudeinput[2+interm2])
+        opt_prob.addVar('tau2','c',lower=lb[3+interm2],upper=up[3+interm2],value=drudeinput[3+interm2])
+        opt_prob.addVar('delta theta','c',lower=lb[4+interm2],upper=up[4+interm2],value=drudeinput[4+interm2])
+        interm2=interm2+5
+
+    opt_prob.addVar('eps inf','c',lower=lb[0+interm2],upper=up[0+interm2],value=drudeinput[0+interm2])
+    if isdrude==1:
+        opt_prob.addVar('omega p','c',lower=lb[1+interm2],upper=up[1+interm2],value=drudeinput[1+interm2])
+        opt_prob.addVar('gamma','c',lower=lb[2+interm2],upper=up[2+interm2],value=drudeinput[2+interm2])
+        interm2=interm2+2
+
+    for i in range(0,n):
+        opt_prob.addVar('chi'+str(i),'c',lower=lb[1+interm2+3*i],upper=up[1+interm2+3*i],value=drudeinput[1+interm2+3*i])#pour drude
+        opt_prob.addVar('w'+str(i),'c',lower=lb[2+interm2+3*i],upper=up[2+interm2+3*i],value=drudeinput[2+interm2+3*i])#pour drude
+        opt_prob.addVar('gamma'+str(i),'c',lower=lb[3+interm2+3*i],upper=up[3+interm2+3*i],value=drudeinput[3+interm2+3*i])#pour drude
+    
+    opt_prob.addObj('f')
+    #opt_prob.addCon('g1','i') #possibility to add constraintes
+    #opt_prob.addCon('g2','i')
+        
+    ##############################################################################
+    ##############################################################################
+    # solving the problem with the function in scipy.optimize
+    ##############################################################################
+    ##############################################################################
+    if  algo==1:
+        xopt,fopt=pso(monerreur,lb,up,swarmsize=swarmsize,minfunc=1e-18,minstep=1e-8,debug=1,phip=0.5,phig=0.5,maxiter=maxiter) 
+    ##############################################################################
+    ##############################################################################
+    # solving the problem with yopt
+    ##############################################################################
+    ##############################################################################
+swarmsize= comm.bcast(swarmsize, root=0)
+maxiter= comm.bcast(maxiter, root=0)
+
 if  algo==2:
 # Solve Problem (No-Parallelization)
-	alpso_none = ALPSO()
+	alpso_none = ALPSO()#pll_type='SPM')
 	alpso_none.setOption('fileout',1)
 	alpso_none.setOption('SwarmSize',swarmsize)
 	alpso_none.setOption('maxInnerIter',6)
@@ -438,41 +463,43 @@ if  algo==2:
 	#end
 ##############################################################################
 ##############################################################################
-print("the best error was: \t" + str(fopt)+"\n")
-print("the best parameters were: \t" + str(xopt)+"\n")
-##############################################################################
-myfitteddata=myfitdata(xopt)
-##############################################################################
-##############################################################################
-# final plot of the results
-##############################################################################
-##############################################################################
-plotall(myinputdata,myinputdatafromfile,myfitteddata,monepsilon,myglobalparameters)
-##############################################################################
-#saving the results
-##############################################################################
-##############################################################################
-
-outputtime=np.column_stack((myglobalparameters.t,myfitteddata.pulse))
-
-
-print("\n Please cite this paper in any communication about any use of fit@tds :")
-print("\n THz-TDS time-trace analysis for the extraction of material and metamaterial parameters")
-print("\n Romain Peretti, Sergey Mitryukovskiy, Kevin Froberger, Aniss Mebarki, Sophie Eliet, Mathias Vanwolleghem, and Jean-Francois Lampin")
-print("\n IEEE Transactions on Terahertz Science and Technology, Volume 9, Issue 2")
-print("\n DOI: 10.1109/TTHZ.2018.2889227 \n")
-
-print("\n Please choose the file name and path to save the fit results in time domain\n")
-pathoutputime=tkFileDialog.asksaveasfilename()
-fileoutputtime=open(pathoutputime,'w')
-np.savetxt(fileoutputtime,outputtime,header="Please cite this paper in any communication about any use of fit@tds : \n THz-TDS time-trace analysis for the extraction of material and metamaterial parameters \n Romain Peretti, Sergey Mitryukovskiy, Kevin Froberger, Aniss Mebarki, Sophie Eliet, Mathias Vanwolleghem, and Jean-Francois Lampin \n IEEE Transactions on Terahertz Science and Technology, Volume 9, Issue 2 \n DOI: 10.1109/TTHZ.2018.2889227 \n \n time \t E-field")
-fileoutputtime.close()
-
-outputfreq=abs(np.column_stack((myglobalparameters.freq,myfitteddata.Spulse,np.real(myfitteddata.epsilon),np.imag(myfitteddata.epsilon), np.real(np.sqrt(myfitteddata.epsilon)),np.imag(np.sqrt(myfitteddata.epsilon)),np.real(monepsilon) ,np.imag(monepsilon), np.real(np.sqrt(monepsilon)),np.imag(np.sqrt(monepsilon)) )))
-print("\n Please choose the file name and path to save the fit results in frequency domain\n")
-pathoutpufreq=tkFileDialog.asksaveasfilename()
-fileoutputfreq=open(pathoutpufreq,'w')
-np.savetxt(fileoutputfreq,outputfreq,header="Please cite this paper in any communication about any use of fit@tds : \n THz-TDS time-trace analysis for the extraction of material and metamaterial parameters \n Romain Peretti, Sergey Mitryukovskiy, Kevin Froberger, Aniss Mebarki, Sophie Eliet, Mathias Vanwolleghem, and Jean-Francois Lampin \n IEEE Transactions on Terahertz Science and Technology, Volume 9, Issue 2 \n DOI: 10.1109/TTHZ.2018.2889227 \n \n Freq \t E-field \t real part of fitted epsilon \t imaginary part of fitted epsilon \t real part of fitted n \t imaginary part of fitted n \t real part of initial epsilon \t imaginary part of initial epsilon \t real part of initial n\t imaginary part of initial n")
-fileoutputfreq.close()
-root.destroy()
-root.mainloop()
+if myrank == 0:
+    print("the best error was: \t" + str(fopt)+"\n")
+    print("the best parameters were: \t" + str(xopt)+"\n")
+    ##############################################################################
+    myfitteddata=myfitdata(xopt)
+    ##############################################################################
+    ##############################################################################
+    # final plot of the results
+    ##############################################################################
+    ##############################################################################
+    plotall(myinputdata,myinputdatafromfile,myfitteddata,monepsilon,myglobalparameters)
+    ##############################################################################
+    #saving the results
+    ##############################################################################
+    ##############################################################################
+    
+    outputtime=np.column_stack((myglobalparameters.t,myfitteddata.pulse))
+    
+    
+    print("\n Please cite this paper in any communication about any use of fit@tds :")
+    print("\n THz-TDS time-trace analysis for the extraction of material and metamaterial parameters")
+    print("\n Romain Peretti, Sergey Mitryukovskiy, Kevin Froberger, Aniss Mebarki, Sophie Eliet, Mathias Vanwolleghem, and Jean-Francois Lampin")
+    print("\n IEEE Transactions on Terahertz Science and Technology, Volume 9, Issue 2")
+    print("\n DOI: 10.1109/TTHZ.2018.2889227 \n")
+    
+    print("\n Please choose the file name and path to save the fit results in time domain\n")
+    root3=tk.Tk()
+    pathoutputime=tkFileDialog.asksaveasfilename()
+    fileoutputtime=open(pathoutputime,'w')
+    np.savetxt(fileoutputtime,outputtime,header="Please cite this paper in any communication about any use of fit@tds : \n THz-TDS time-trace analysis for the extraction of material and metamaterial parameters \n Romain Peretti, Sergey Mitryukovskiy, Kevin Froberger, Aniss Mebarki, Sophie Eliet, Mathias Vanwolleghem, and Jean-Francois Lampin \n IEEE Transactions on Terahertz Science and Technology, Volume 9, Issue 2 \n DOI: 10.1109/TTHZ.2018.2889227 \n \n time \t E-field")
+    fileoutputtime.close()
+    
+    outputfreq=abs(np.column_stack((myglobalparameters.freq,myfitteddata.Spulse,np.real(myfitteddata.epsilon),np.imag(myfitteddata.epsilon), np.real(np.sqrt(myfitteddata.epsilon)),np.imag(np.sqrt(myfitteddata.epsilon)),np.real(monepsilon) ,np.imag(monepsilon), np.real(np.sqrt(monepsilon)),np.imag(np.sqrt(monepsilon)) )))
+    print("\n Please choose the file name and path to save the fit results in frequency domain\n")
+    pathoutpufreq=tkFileDialog.asksaveasfilename()
+    fileoutputfreq=open(pathoutpufreq,'w')
+    np.savetxt(fileoutputfreq,outputfreq,header="Please cite this paper in any communication about any use of fit@tds : \n THz-TDS time-trace analysis for the extraction of material and metamaterial parameters \n Romain Peretti, Sergey Mitryukovskiy, Kevin Froberger, Aniss Mebarki, Sophie Eliet, Mathias Vanwolleghem, and Jean-Francois Lampin \n IEEE Transactions on Terahertz Science and Technology, Volume 9, Issue 2 \n DOI: 10.1109/TTHZ.2018.2889227 \n \n Freq \t E-field \t real part of fitted epsilon \t imaginary part of fitted epsilon \t real part of fitted n \t imaginary part of fitted n \t real part of initial epsilon \t imaginary part of initial epsilon \t real part of initial n\t imaginary part of initial n")
+    fileoutputfreq.close()
+    root3.destroy()
+    root3.mainloop()
