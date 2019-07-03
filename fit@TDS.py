@@ -20,8 +20,6 @@ import tkFileDialog # For python 2
 from finalplot import plotall ## Library for plotting results
 from finalplot import plotinput  ## Library for plotting results
 from epsillon3 import dielcal ## Library for resolving the inverse problem in our case (see the assumptions necessary to use this library)
-import pyculib.fft
-import numba.cuda
 
 
 import warnings
@@ -280,7 +278,7 @@ class simulation_choices:
         self.window.rowconfigure(1, weight=1)
         self.window.columnconfigure(1, weight=1)
         
-        self.choices_list = [tk.StringVar(self.window),tk.StringVar(self.window),tk.StringVar(self.window),tk.StringVar(self.window),
+        self.choices_list = [tk.StringVar(self.window),tk.StringVar(self.window),tk.StringVar(self.window),
                              tk.StringVar(self.window),tk.StringVar(self.window)] # This list is build as follow [algo choice,model struct,fit thicknes,scattering choice, drude choice, prompt choice]
         self.options_list = [['-','NumPy optimize swarm particle', 'ALPSO without parallelization','ALPSO with parallelization'],
                              [ '-','Transmission Fabry-Perot','Transmission Fabry-Perot with a resonator (TDCMT)'],
@@ -288,33 +286,41 @@ class simulation_choices:
         self.label_text = ["Choose an algorithm \n","Wich model do you whant to use for the photonic structure ? \n",
                            "Is the thickness a variable for the fit ? \n",
                            "Drude model depicts the permitivity Epsillon as Eps =Eps_0- Omega_p^2/(Omega^2-j*gamma*omega) \n Do you want to have a Drude term in the model ? \n","Do you want to use a file with the parameters or do you want to enter them manually ? \n"]
-        self.functions = [self.change1,self.change2,self.change3,self.change4,self.change5,self.change6]
+        self.functions = [self.change1,self.change2,self.change3,self.change4,self.change5]
         self.my_labels=[]
         self.pop_menus=[]
         self.l = len(self.choices_list)
         for i in range(self.l):
-            self.choices_list[i].set(self.options_list[i][0])
-            self.my_labels.append(tk.Label(self.window,text=self.label_text[i]))
-            self.my_labels[i].grid(row=i,column=0)
-            self.pop_menus.append(tk.OptionMenu(self.window,self.choices_list[i],*self.options_list[i]))
-            self.pop_menus[i].grid(row=i,column=2)
-            self.choices_list[i].trace('w',self.functions[i])
+            if i < self.l-1:
+                self.choices_list[i].set(self.options_list[i][0])
+                self.my_labels.append(tk.Label(self.window,text=self.label_text[i]))
+                self.my_labels[i].grid(row=i,column=0)
+                self.pop_menus.append(tk.OptionMenu(self.window,self.choices_list[i],*self.options_list[i]))
+                self.pop_menus[i].grid(row=i,column=2)
+                self.choices_list[i].trace('w',self.functions[i])
+            else:
+                self.choices_list[i].set(self.options_list[i][0])
+                self.my_labels.append(tk.Label(self.window,text=self.label_text[i]))
+                self.my_labels[i].grid(row=self.l+2,column=0)
+                self.pop_menus.append(tk.OptionMenu(self.window,self.choices_list[i],*self.options_list[i]))
+                self.pop_menus[i].grid(row=self.l+2,column=2)
+                self.choices_list[i].trace('w',self.functions[i])
 
         ######################################################################
         
         self.nb_oscillators_label_1 = tk.Label(self.window, text = "")
-        self.nb_oscillators_label_1.grid(row = 8, column = 0)
+        self.nb_oscillators_label_1.grid(row = self.l-1, column = 0)
         self.nb_oscillators_label_2 = tk.Label(self.window, text = "Lorentz model depicts the permitivity Epsillon as Eps = Eps_0 +[ Delta_epsillon*Omega_0^2]/[Omega_0^2+j*gamma*Omega-Omega^2]")
-        self.nb_oscillators_label_2.grid(row = 9, column = 0)
+        self.nb_oscillators_label_2.grid(row = self.l, column = 0)
         self.nb_oscillators_label_3 = tk.Label(self.window, text = "Enter a value for the number of Lorentz oscillators in the model:")
-        self.nb_oscillators_label_3.grid(row = 10, column = 0)
+        self.nb_oscillators_label_3.grid(row = self.l+1, column = 0)
         self.nb_oscillators = tk.Entry(self.window)
-        self.nb_oscillators.grid(row = 10, column = 2)
+        self.nb_oscillators.grid(row = self.l+1, column = 2)
         
         ######################################################################
         
         self.submit_btn = tk.Button(self.window, text = "Submit", command = self.get_nb_oscillators)
-        self.submit_btn.grid(row = 12, column = 2)
+        self.submit_btn.grid(row = self.l+3, column = 2)
         
         self.nb_oscillators.bind("<Return>", self.get_nb_oscillators)
         
@@ -350,20 +356,20 @@ class simulation_choices:
             zvariable = 0
 
     
-    def change5(self,*args):
+    def change4(self,*args):
         global isdrude
-        isdrude = self.choices_list[4].get()
+        isdrude = self.choices_list[3].get()
         if isdrude == 'Yes':
             isdrude = 1
         elif isdrude == 'No':
             isdrude = 0
     
-    def change6(self,*args):
+    def change5(self,*args):
         global prompt
-        prompt = self.choices_list[5].get()
-        if prompt == self.options_list[5][1]:
+        prompt = self.choices_list[4].get()
+        if prompt == self.options_list[4][1]:
             prompt = 0
-        elif prompt == self.options_list[5][2]:
+        elif prompt == self.options_list[4][2]:
             prompt = 1
     
     def get_nb_oscillators(self,event=None):
@@ -660,14 +666,6 @@ def optimALPSO(opt_prob, swarmsize, maxiter,algo):
     alpso_none.setOption('HoodSize',swarmsize/100)
     return(alpso_none(opt_prob))
 
-def fft_gpu(y):
-    out = np.empty_like(y, dtype=np.complex64)
-    gpu_temp = numba.cuda.to_device(out)  # make GPU array
-    pyculib.fft.fft(y.astype(np.complex64),gpu_temp)  # implied host->device
-    gpu_temp.copy_to_host(out)
-    out=out[:len(out)/2+1]
-    return(out)
-    
 
 # =============================================================================
 # retrieval of the data
@@ -794,20 +792,6 @@ if myrank ==0:
     if prompt:
         mesparam = np.zeros([nb_param,3])
         Input_param()
-#        while True:
-#            Input_param()
-#            for i in range(nb_param):
-#                if my_maxs[i]<=my_mins[i]:
-#                    print("The maximum of "+myvariables[i]+" must be strictly higher than its minimum")
-#                    continue
-#                elif my_maxs[i]<my_values[i]:
-#                    print("The maximum of "+ myvariables[i]+" must be higher than its value")
-#                    continue
-#                elif my_mins[i]>my_values[i]:
-#                    print("The minimum of "+ myvariables[i]+" must be lower than its value")
-#                    continue
-#                else:
-#                    break
             
     else: ## This is in case the user doesn't want to put all the parameters of the model manually
         root =tk.Tk()
