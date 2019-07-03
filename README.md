@@ -5,7 +5,7 @@ The code is explained in :
 
 THz-TDS time-trace analysis for the extraction of material and metamaterial parameters 
 
-Romain Peretti, Sergey Mitryukovskiy, Kevin Froberger, Aniss Mebarki, Sophie Eliet, Mathias Vanwolleghem, and Jean-Francois Lampin 
+Romain Peretti, Sergey Mitryukovskiy, Kevin Froberger, Aniss Mebarki, Sophie Eliet, Mathias Vanwolleghem, Jean-Francois Lampin, Melanie Lavancier and and Nabil Vindas 
 
 IEEE Transactions on Terahertz Science and Technology, Volume 9, Issue 2 \n 
 
