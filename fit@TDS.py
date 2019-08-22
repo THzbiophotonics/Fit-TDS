@@ -16,7 +16,11 @@ try:
     import Tkinter as tk  ## Library for GUI python 2
 except:
     import tkinter as tk ## Python 3
-import tkFileDialog # For python 2
+try:
+    import tkFileDialog # For python 2
+except:
+    import tkinter.filedialog as tkFileDialog # For python 3
+    from io import BytesIO
 from finalplot import plotall ## Library for plotting results
 from finalplot import plotinput  ## Library for plotting results
 from epsillon3 import dielcal ## Library for resolving the inverse problem in our case (see the assumptions necessary to use this library)
@@ -281,7 +285,7 @@ class simulation_choices:
         self.choices_list = [tk.StringVar(self.window),tk.StringVar(self.window),tk.StringVar(self.window),
                              tk.StringVar(self.window),tk.StringVar(self.window)] # This list is build as follow [algo choice,model struct,fit thicknes,scattering choice, drude choice, prompt choice]
         self.options_list = [['-','NumPy optimize swarm particle', 'ALPSO without parallelization','ALPSO with parallelization'],
-                             [ '-','Transmission Fabry-Perot','Transmission Fabry-Perot with a resonator (TDCMT)'],
+                             [ '-','Transmission Fabry-Perot','Transmission Fabry-Perot \n with a resonator (TDCMT)'],
                              ['-','Yes','No'],['-','Yes','No'],[ '-','Use a file','Do it manually']]
         self.label_text = ["Choose an algorithm \n","Wich model do you whant to use for the photonic structure ? \n",
                            "Is the thickness a variable for the fit ? \n",
@@ -508,6 +512,33 @@ class Input_param:
         self.window2.destroy()
 
 
+class Continue_opt:
+    
+    def __init__(self):
+        self.window = tk.Tk()
+        self.window.title("Optimization")
+        
+        self.Thick_label = tk.Label(self.window, text = "Do you want to change the parameters value \n and do the optimization again.")
+        self.Thick_label.grid(row = 0, column = 0)
+    
+        self.yes_btn = tk.Button(self.window, text = "Yes", command = self.continue_fnc)
+        self.yes_btn.grid(row =1, column = 0)
+        
+        self.no_btn = tk.Button(self.window, text = "No", command = self.stop_fnc)
+        self.no_btn.grid(row =3, column = 0)
+        
+        
+        self.window.mainloop()
+        
+    def continue_fnc(self,event=None): # event is because when we bind the entry case with the event pressing <Return>, this event is consider an entry of the function
+        global iter_opt
+        iter_opt = 1
+        self.window.destroy()
+    
+    def stop_fnc(self,event=None): # event is because when we bind the entry case with the event pressing <Return>, this event is consider an entry of the function
+        global iter_opt
+        iter_opt = 0
+        self.window.destroy()
 
 
 
@@ -663,7 +694,7 @@ def optimALPSO(opt_prob, swarmsize, maxiter,algo):
     alpso_none.setOption('stopCriteria',0)#Stopping Criteria Flag (0 - maxIters, 1 - convergence)
     alpso_none.setOption('printInnerIters',1)
     alpso_none.setOption('printOuterIters',1)
-    alpso_none.setOption('HoodSize',swarmsize/100)
+    alpso_none.setOption('HoodSize',int(swarmsize/100))
     return(alpso_none(opt_prob))
 
 
@@ -783,155 +814,156 @@ if myrank ==0:
     lb=np.ones(len(myvariables))   ## Array with  the min value of the parameters of the model
     up=np.ones(len(myvariables))   ## Array with  the max value of the parameters of the model
     
+iter_opt=1
+while iter_opt:
+    if myrank == 0:
+        nb_param = len(myvariables)
+        my_labels = []
+        my_values = []
+        my_mins = []
+        my_maxs = []
+        if prompt:
+            mesparam = np.zeros([nb_param,3])
+            Input_param()
+                
+        else: ## This is in case the user doesn't want to put all the parameters of the model manually
+            root =tk.Tk()
+            print("\nPlease choose the file where all the parameters for the model are\n")
+            pathparam=tkFileDialog.askopenfilename(parent=root)
+            mesparam=np.loadtxt(pathparam)
+            drudeinput=mesparam[:, 0]
+            lb=mesparam[:, 1]
+            up=mesparam[:, 2]
+            root.destroy()
+            Input_param()
+      
+        
+    #    =============================================================================
+        interm=0  #this is not only in case of a simulated sample
+        
+        if zvariable==1: ## We take into account the thickness as an optimization parameter so we put the value of the tickness and its uncertainty in the corresponding list
+        	drudeinput=np.append([z],drudeinput)
+        	lb=np.append([z*(1-deltaz)],lb)
+        	up=np.append([z*(1+deltaz)],up)
+        	interm=interm+1                
+        if mymodelstruct==2:              #if one use resonator tdcmt 
+            interm=interm+5
     
-    nb_param = len(myvariables)
-    my_labels = []
-    my_values = []
-    my_mins = []
-    my_maxs = []
-    if prompt:
-        mesparam = np.zeros([nb_param,3])
-        Input_param()
-            
-    else: ## This is in case the user doesn't want to put all the parameters of the model manually
-        root =tk.Tk()
-        print("\nPlease choose the file where all the parameters for the model are\n")
-        pathparam=tkFileDialog.askopenfilename(parent=root)
-        mesparam=np.loadtxt(pathparam)
-        drudeinput=mesparam[:, 0]
-        lb=mesparam[:, 1]
-        up=mesparam[:, 2]
-        root.destroy()
-        Input_param()
-  
+                               
+        
+        # =============================================================================
+        # preparation of the input for the algorithm
+        # =============================================================================
+        print("############################################################################################")
+        print("############################################################################################")
+        print("begining the calculation please wait ...")
+        print("############################################################################################")
+        print("############################################################################################")
+        
+        # Instantiate Optimization Problem 
     
-#    =============================================================================
-    interm=0  #this is not only in case of a simulated sample
     
-    if zvariable==1: ## We take into account the thickness as an optimization parameter so we put the value of the tickness and its uncertainty in the corresponding list
-    	drudeinput=np.append([z],drudeinput)
-    	lb=np.append([z*(1-deltaz)],lb)
-    	up=np.append([z*(1+deltaz)],up)
-    	interm=interm+1                
-    if mymodelstruct==2:              #if one use resonator tdcmt 
-        interm=interm+5
-
-                           
     
-    # =============================================================================
-    # preparation of the input for the algorithm
-    # =============================================================================
-    print("############################################################################################")
-    print("############################################################################################")
-    print("begining the calculation please wait ...")
-    print("############################################################################################")
-    print("############################################################################################")
+    if myrank != 0:
+        algo=lb=up=drudeinput=swarmsize=maxiter=zvariable=mymodelstruct=isdrude=n=myinputdata=z=pathwithoutsample=pathwithsample=None
     
-    # Instantiate Optimization Problem 
-
-
-
-if myrank != 0:
-    algo=lb=up=drudeinput=swarmsize=maxiter=zvariable=mymodelstruct=isdrude=n=myinputdata=z=pathwithoutsample=pathwithsample=None
-
-## We broadcast the variables from the master node to the other nodes
-algo = comm.bcast(algo, root=0)
-lb = comm.bcast(lb, root=0)   
-drudeinput = comm.bcast(drudeinput, root=0) 
-up = comm.bcast(up, root=0) 
-swarmsize= comm.bcast(swarmsize, root=0)
-maxiter= comm.bcast(maxiter, root=0)
-zvariable = comm.bcast(zvariable, root=0)
-mymodelstruct = comm.bcast(mymodelstruct, root=0)
-isdrude = comm.bcast(isdrude, root=0)
-n = comm.bcast(n, root=0)
-myinputdata = comm.bcast(myinputdata, root=0) 
-z = comm.bcast(z, root=0)
-pathwithoutsample = comm.bcast(pathwithoutsample, root=0)
-pathwithsample = comm.bcast(pathwithsample, root=0)
-
-## Optimization dans le cas PyOpt swarm particle ALPSO without parallelization (also works with parallelization)
-if algo>1:
-    interm2=0  ## Intermediate variable with a function similar to interm
-    opt_prob = Optimization('Dielectric modeling based on TDS pulse fitting',objfunc)
-    if zvariable==1:
-        opt_prob.addVar('thickness','c',lower=lb[0],upper=up[0],value=drudeinput[0])
-        interm2=interm2+1
-    if mymodelstruct==2:       #in case of TDCMT
-        opt_prob.addVar('w0 tdcmt','c',lower=lb[0+interm2],upper=up[0+interm2],value=drudeinput[0+interm2])
-        opt_prob.addVar('tau0','c',lower=lb[1+interm2],upper=up[1+interm2],value=drudeinput[1+interm2])
-        opt_prob.addVar('tau1','c',lower=lb[2+interm2],upper=up[2+interm2],value=drudeinput[2+interm2])
-        opt_prob.addVar('tau2','c',lower=lb[3+interm2],upper=up[3+interm2],value=drudeinput[3+interm2])
-        opt_prob.addVar('delta theta','c',lower=lb[4+interm2],upper=up[4+interm2],value=drudeinput[4+interm2])
-        interm2=interm2+5
-
-
-    opt_prob.addVar('eps inf','c',lower=lb[0+interm2],upper=up[0+interm2],value=drudeinput[0+interm2])
-    if isdrude==1:
-        opt_prob.addVar('omega p','c',lower=lb[1+interm2],upper=up[1+interm2],value=drudeinput[1+interm2])
-        opt_prob.addVar('gamma','c',lower=lb[2+interm2],upper=up[2+interm2],value=drudeinput[2+interm2])
-        interm2=interm2+2
-
-    for i in range(0,n):
-        opt_prob.addVar('chi'+str(i),'c',lower=lb[1+interm2+3*i],upper=up[1+interm2+3*i],value=drudeinput[1+interm2+3*i])#pour drude
-        opt_prob.addVar('w'+str(i),'c',lower=lb[2+interm2+3*i],upper=up[2+interm2+3*i],value=drudeinput[2+interm2+3*i])#pour drude
-        opt_prob.addVar('gamma'+str(i),'c',lower=lb[3+interm2+3*i],upper=up[3+interm2+3*i],value=drudeinput[3+interm2+3*i])#pour drude
+    ## We broadcast the variables from the master node to the other nodes
+    algo = comm.bcast(algo, root=0)
+    lb = comm.bcast(lb, root=0)   
+    drudeinput = comm.bcast(drudeinput, root=0) 
+    up = comm.bcast(up, root=0) 
+    swarmsize= comm.bcast(swarmsize, root=0)
+    maxiter= comm.bcast(maxiter, root=0)
+    zvariable = comm.bcast(zvariable, root=0)
+    mymodelstruct = comm.bcast(mymodelstruct, root=0)
+    isdrude = comm.bcast(isdrude, root=0)
+    n = comm.bcast(n, root=0)
+    myinputdata = comm.bcast(myinputdata, root=0) 
+    z = comm.bcast(z, root=0)
+    pathwithoutsample = comm.bcast(pathwithoutsample, root=0)
+    pathwithsample = comm.bcast(pathwithsample, root=0)
     
-    opt_prob.addObj('f')
-    #opt_prob.addCon('g1','i') #possibility to add constraintes
-    #opt_prob.addCon('g2','i')
-
-
-
-##############################################################################
-##############################################################################
-# solving the problem with the function in scipy.optimize
-##############################################################################
-##############################################################################
-
-
-if  algo==1: ## xopt is a list we the drudeinput's parameters that minimize 'monerreur', fopt is a list with the optimals objective values
-    xopt,fopt=pso(monerreur,lb,up,swarmsize=swarmsize,minfunc=1e-18,minstep=1e-8,debug=1,phip=0.5,phig=0.5,maxiter=maxiter) ## 'monerreur' function that we want to minimize, 'lb' and 'up' bounds of the problem
-
-
-##############################################################################
-##############################################################################
-# solving the problem with yopt
-##############################################################################
-##############################################################################
-
-if  algo>=2:
-    [fopt, xopt, inform] = optimALPSO(opt_prob, swarmsize, maxiter,algo)
-
-##############################################################################
-##############################################################################
-if myrank == 0:
-    print("the best error was: \t" + str(fopt)+"\n")
-    print("the best parameters were: \t" + str(xopt)+"\n")
-    ##############################################################################
-    myfitteddata=myfitdata(xopt)
+    ## Optimization dans le cas PyOpt swarm particle ALPSO without parallelization (also works with parallelization)
+    if algo>1:
+        interm2=0  ## Intermediate variable with a function similar to interm
+        opt_prob = Optimization('Dielectric modeling based on TDS pulse fitting',objfunc)
+        if zvariable==1:
+            opt_prob.addVar('thickness','c',lower=lb[0],upper=up[0],value=drudeinput[0])
+            interm2=interm2+1
+        if mymodelstruct==2:       #in case of TDCMT
+            opt_prob.addVar('w0 tdcmt','c',lower=lb[0+interm2],upper=up[0+interm2],value=drudeinput[0+interm2])
+            opt_prob.addVar('tau0','c',lower=lb[1+interm2],upper=up[1+interm2],value=drudeinput[1+interm2])
+            opt_prob.addVar('tau1','c',lower=lb[2+interm2],upper=up[2+interm2],value=drudeinput[2+interm2])
+            opt_prob.addVar('tau2','c',lower=lb[3+interm2],upper=up[3+interm2],value=drudeinput[3+interm2])
+            opt_prob.addVar('delta theta','c',lower=lb[4+interm2],upper=up[4+interm2],value=drudeinput[4+interm2])
+            interm2=interm2+5
+    
+    
+        opt_prob.addVar('eps inf','c',lower=lb[0+interm2],upper=up[0+interm2],value=drudeinput[0+interm2])
+        if isdrude==1:
+            opt_prob.addVar('omega p','c',lower=lb[1+interm2],upper=up[1+interm2],value=drudeinput[1+interm2])
+            opt_prob.addVar('gamma','c',lower=lb[2+interm2],upper=up[2+interm2],value=drudeinput[2+interm2])
+            interm2=interm2+2
+    
+        for i in range(0,n):
+            opt_prob.addVar('chi'+str(i),'c',lower=lb[1+interm2+3*i],upper=up[1+interm2+3*i],value=drudeinput[1+interm2+3*i])#pour drude
+            opt_prob.addVar('w'+str(i),'c',lower=lb[2+interm2+3*i],upper=up[2+interm2+3*i],value=drudeinput[2+interm2+3*i])#pour drude
+            opt_prob.addVar('gamma'+str(i),'c',lower=lb[3+interm2+3*i],upper=up[3+interm2+3*i],value=drudeinput[3+interm2+3*i])#pour drude
+        
+        opt_prob.addObj('f')
+        #opt_prob.addCon('g1','i') #possibility to add constraintes
+        #opt_prob.addCon('g2','i')
+    
+    
+    
     ##############################################################################
     ##############################################################################
-    # final plot of the results
-    ##############################################################################
-    ##############################################################################
-    plotall(myinputdata,myinputdatafromfile,myfitteddata,monepsilon,myglobalparameters)
-    ##############################################################################
-    #saving the results
+    # solving the problem with the function in scipy.optimize
     ##############################################################################
     ##############################################################################
     
-    outputtime=np.column_stack((myglobalparameters.t,myfitteddata.pulse))
     
-#   plt.plot(myglobalparameters.t, myinputdata.pulse, 'b-', label='pulse data')
-#	plt.plot(myglobalparameters.t, myinputdatafromfile.Pulseinit, 'g-', label='pulse init')
-#	plt.plot(myglobalparameters.t, myfitteddata.pulse, 'r-', label='pulse fited')
-#	plt.xlabel('Time [s]')
-#	plt.ylabel('Pulse (E_field)')
-#	plt.legend()
+    if  algo==1: ## xopt is a list we the drudeinput's parameters that minimize 'monerreur', fopt is a list with the optimals objective values
+        xopt,fopt=pso(monerreur,lb,up,swarmsize=swarmsize,minfunc=1e-18,minstep=1e-8,debug=1,phip=0.5,phig=0.5,maxiter=maxiter) ## 'monerreur' function that we want to minimize, 'lb' and 'up' bounds of the problem
+    
+    
+    ##############################################################################
+    ##############################################################################
+    # solving the problem with yopt
+    ##############################################################################
+    ##############################################################################
+    
+    if  algo>=2:
+        [fopt, xopt, inform] = optimALPSO(opt_prob, swarmsize, maxiter,algo)
+    
+    ##############################################################################
+    ##############################################################################
+    if myrank == 0:
+        print("the best error was: \t" + str(fopt)+"\n")
+        print("the best parameters were: \t" + str(xopt)+"\n")
+        ##############################################################################
+        myfitteddata=myfitdata(xopt)
+        ##############################################################################
+        ##############################################################################
+        # final plot of the results
+        ##############################################################################
+        ##############################################################################
+        plotall(myinputdata,myinputdatafromfile,myfitteddata,monepsilon,myglobalparameters)
+        ##############################################################################
+        #saving the results
+        ##############################################################################
+        ##############################################################################
+        
+        outputtime=np.column_stack((myglobalparameters.t,myfitteddata.pulse))
+        continue_opt=Continue_opt()
+          
+    if myrank!=0:
+        iter_opt=None
+    iter_opt=comm.bcast(iter_opt,root=0)
+    
 
     
-    
+if myrank==0:    
     print("\n Please cite this paper in any communication about any use of fit@tds :")
     print("\n THz-TDS time-trace analysis for the extraction of material and metamaterial parameters")
     print("\n Romain Peretti, Sergey Mitryukovskiy, Kevin Froberger, Aniss Mebarki, Sophie Eliet, Mathias Vanwolleghem, Jean-Francois Lampin, Melanie Lavancier and and Nabil Vindas")
@@ -941,14 +973,14 @@ if myrank == 0:
     print("\n Please choose the file name and path to save the fit results in time domain\n")
     root3=tk.Tk()
     pathoutputime=tkFileDialog.asksaveasfilename()
-    fileoutputtime=open(pathoutputime,'w')
+    fileoutputtime=open(pathoutputime,'wb')
     np.savetxt(fileoutputtime,outputtime,header="Please cite this paper in any communication about any use of fit@tds : \n THz-TDS time-trace analysis for the extraction of material and metamaterial parameters \n Romain Peretti, Sergey Mitryukovskiy, Kevin Froberger, Aniss Mebarki, Sophie Eliet, Mathias Vanwolleghem Jean-Francois Lampin, Melanie Lavancier and and Nabil Vindas \n IEEE Transactions on Terahertz Science and Technology, Volume 9, Issue 2 \n DOI: 10.1109/TTHZ.2018.2889227 \n \n time \t E-field")
     fileoutputtime.close()
     
     outputfreq=abs(np.column_stack((myglobalparameters.freq,myfitteddata.Spulse,np.real(myfitteddata.epsilon),np.imag(myfitteddata.epsilon), np.real(np.sqrt(myfitteddata.epsilon)),np.imag(np.sqrt(myfitteddata.epsilon)),np.real(monepsilon) ,np.imag(monepsilon), np.real(np.sqrt(monepsilon)),np.imag(np.sqrt(monepsilon)) )))
     print("\n Please choose the file name and path to save the fit results in frequency domain\n")
     pathoutpufreq=tkFileDialog.asksaveasfilename()
-    fileoutputfreq=open(pathoutpufreq,'w')
+    fileoutputfreq=open(pathoutpufreq,'wb')
     np.savetxt(fileoutputfreq,outputfreq,header="Please cite this paper in any communication about any use of fit@tds : \n THz-TDS time-trace analysis for the extraction of material and metamaterial parameters \n Romain Peretti, Sergey Mitryukovskiy, Kevin Froberger, Aniss Mebarki, Sophie Eliet, Mathias Vanwolleghem, Jean-Francois Lampin, Melanie Lavancier and and Nabil Vindas \n IEEE Transactions on Terahertz Science and Technology, Volume 9, Issue 2 \n DOI: 10.1109/TTHZ.2018.2889227 \n \n Freq \t E-field \t real part of fitted epsilon \t imaginary part of fitted epsilon \t real part of fitted n \t imaginary part of fitted n \t real part of initial epsilon \t imaginary part of initial epsilon \t real part of initial n\t imaginary part of initial n")
     fileoutputfreq.close()
     root3.destroy()
