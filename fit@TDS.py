@@ -515,30 +515,69 @@ class Input_param:
 class Continue_opt:
     
     def __init__(self):
+        global pathwithoutsample,pathwithsample,z,deltaz
+  
         self.window = tk.Tk()
-        self.window.title("Optimization")
+        self.window.title("Optimization")      
         
-        self.Thick_label = tk.Label(self.window, text = "Do you want to change the parameters value \n and do the optimization again.")
-        self.Thick_label.grid(row = 0, column = 0)
-    
+        self.nb_exp_label = tk.Label(self.window, text = "Do you want to change the parameters value \n and do the optimization again.")
+        self.nb_exp_label.grid(row = 0, column = 0)
+
+
         self.yes_btn = tk.Button(self.window, text = "Yes", command = self.continue_fnc)
         self.yes_btn.grid(row =1, column = 0)
         
         self.no_btn = tk.Button(self.window, text = "No", command = self.stop_fnc)
-        self.no_btn.grid(row =3, column = 0)
-        
+        self.no_btn.grid(row =2, column = 0)
+                
+        self.window.update_idletasks()
         
         self.window.mainloop()
         
-    def continue_fnc(self,event=None): # event is because when we bind the entry case with the event pressing <Return>, this event is consider an entry of the function
+    
+    
+    def continue_fnc(self,event=None):
         global iter_opt
         iter_opt = 1
-        self.window.destroy()
+        
+        self.nb_oscillators_label_2 = tk.Label(self.window, text = "Enter the number of Lorentz oscillators")
+        self.nb_oscillators_label_2.grid(row = 3, column = 0)
+        self.nb_oscillators = tk.Entry(self.window,textvariable=tk.StringVar(self.window, value=str(0)))
+        self.nb_oscillators.grid(row = 3, column = 1)
+        
+        self.submit_btn = tk.Button(self.window, text = "Submit", command = self.get_nb_oscillators)
+        self.submit_btn.grid(row = 4, column = 1)
     
-    def stop_fnc(self,event=None): # event is because when we bind the entry case with the event pressing <Return>, this event is consider an entry of the function
+    def stop_fnc(self,event=None):
         global iter_opt
         iter_opt = 0
         self.window.destroy()
+    
+    def get_nb_oscillators(self,event=None):
+        global n
+        test_variable=1
+        error_label=[]
+        try:
+            n = float(self.nb_oscillators.get())
+            if n!=int(n) or n<0:
+                error_label = error_label + ["The number of oscillators must be a positive integer"]
+                test_variable=0
+        except:
+            error_label = error_label + ["The number of oscillators must be a float or int"]
+            test_variable=0
+        if test_variable:
+            n=int(n)
+            self.window.destroy()
+        else:
+            self.window2=tk.Tk()
+            self.window2.title("Error")
+            nb_errors=len(error_label)
+            my_errors=[]
+            for i in range(nb_errors):
+                my_errors.append(tk.Label(self.window2, text = error_label[i]))
+                my_errors[i].grid(row = i+1, column = 0)
+            self.cancel_btn = tk.Button(self.window2, text = "Ok", command = self.cancel)
+            self.cancel_btn.grid(row = nb_errors + 1, column = 0) 
 
 
 
@@ -787,36 +826,37 @@ if myrank ==0:
     ###############################################################################
     #Input questions
     ###############################################################################
-    if mymodelstruct==2:
-        for i in range(0,1):
-            myvariables=["Omega resonator/metasurface_"+str(i), "Tau 0 resonator/metasurface_" +str(i),"Tau 1 resonator/metasurface_"+str(i),"Tau 2 resonator/metasurface_"+str(i),"delta Theta resonator/metasurface_"+str(i) ]
-            myunits=["Radian / s", "s" ,"s","s","Radian"]
-            mydescription=["central angular frequency of the mode of the resonator # "+str(i), "Absorption life time of the mode of the resonator # " +str(i),"Forward coupling lifetime of the mode of the resonator # "+str(i),"Backward coupling lifetuime of the mode of the resonator # "+str(i),"Phase between Forward and backward coupling for the resontator # "+str(i) ]
-    else:
-        myvariables=[]
-        myunits=[]
-        mydescription=[]
-        
-        
-    
-    myvariables=myvariables+["epsillon_inf"]
-    myunits=myunits+["usual permitivity unit without dimension (square of a refractive index)"]
-    mydescription=mydescription+["the permitivity at very high frequency frequency"]
-    if isdrude==1:
-        myvariables=myvariables+["Omega_p"]+["gamma"]
-        myunits=myunits+["radian/s"]+["radian/s"]
-        mydescription=mydescription+[" the drude Model Plasma frequency : [ (N * (q^2))  /  (Epsillon_0  * m_e) ]"]+["the drude damping rate"]
-    for i in range(0,n):
-        myvariables=myvariables+["Delta_Epsillon_"+str(i), "1/(2pi)*Omega0_" +str(i),"1/(2pi)*Gamma_"+str(i) ] 
-        myunits=myunits+["usual permitivity unit without dimension (square of a refractive index)", "Hz","Hz" ]
-        mydescription=mydescription+["the oscillator strentgh of the mode # ", "the frequency of the mode # " +str(i),"the linewidth of the mode # "+str(i) ] 
-    drudeinput=np.ones(len(myvariables))
-    lb=np.ones(len(myvariables))   ## Array with  the min value of the parameters of the model
-    up=np.ones(len(myvariables))   ## Array with  the max value of the parameters of the model
-    
 iter_opt=1
 while iter_opt:
     if myrank == 0:
+        if mymodelstruct==2:
+            for i in range(0,1):
+                myvariables=["Omega resonator/metasurface_"+str(i), "Tau 0 resonator/metasurface_" +str(i),"Tau 1 resonator/metasurface_"+str(i),"Tau 2 resonator/metasurface_"+str(i),"delta Theta resonator/metasurface_"+str(i) ]
+                myunits=["Radian / s", "s" ,"s","s","Radian"]
+                mydescription=["central angular frequency of the mode of the resonator # "+str(i), "Absorption life time of the mode of the resonator # " +str(i),"Forward coupling lifetime of the mode of the resonator # "+str(i),"Backward coupling lifetuime of the mode of the resonator # "+str(i),"Phase between Forward and backward coupling for the resontator # "+str(i) ]
+        else:
+            myvariables=[]
+            myunits=[]
+            mydescription=[]
+            
+            
+        
+        myvariables=myvariables+["epsillon_inf"]
+        myunits=myunits+["usual permitivity unit without dimension (square of a refractive index)"]
+        mydescription=mydescription+["the permitivity at very high frequency frequency"]
+        if isdrude==1:
+            myvariables=myvariables+["Omega_p"]+["gamma"]
+            myunits=myunits+["radian/s"]+["radian/s"]
+            mydescription=mydescription+[" the drude Model Plasma frequency : [ (N * (q^2))  /  (Epsillon_0  * m_e) ]"]+["the drude damping rate"]
+        for i in range(0,n):
+            myvariables=myvariables+["Delta_Epsillon_"+str(i), "1/(2pi)*Omega0_" +str(i),"1/(2pi)*Gamma_"+str(i) ] 
+            myunits=myunits+["usual permitivity unit without dimension (square of a refractive index)", "Hz","Hz" ]
+            mydescription=mydescription+["the oscillator strentgh of the mode # ", "the frequency of the mode # " +str(i),"the linewidth of the mode # "+str(i) ] 
+        drudeinput=np.ones(len(myvariables))
+        lb=np.ones(len(myvariables))   ## Array with  the min value of the parameters of the model
+        up=np.ones(len(myvariables))   ## Array with  the max value of the parameters of the model
+    
+
         nb_param = len(myvariables)
         my_labels = []
         my_values = []
