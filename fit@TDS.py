@@ -537,12 +537,12 @@ class Continue_opt:
     
     
     def continue_fnc(self,event=None):
-        global iter_opt
+        global iter_opt,n
         iter_opt = 1
         
         self.nb_oscillators_label_2 = tk.Label(self.window, text = "Enter the number of Lorentz oscillators")
         self.nb_oscillators_label_2.grid(row = 3, column = 0)
-        self.nb_oscillators = tk.Entry(self.window,textvariable=tk.StringVar(self.window, value=str(0)))
+        self.nb_oscillators = tk.Entry(self.window,textvariable=tk.StringVar(self.window, value=str(n)))
         self.nb_oscillators.grid(row = 3, column = 1)
         
         self.submit_btn = tk.Button(self.window, text = "Submit", command = self.get_nb_oscillators)
