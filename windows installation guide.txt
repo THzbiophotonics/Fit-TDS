@@ -6,12 +6,16 @@ NumPy - http://www.numpy.org/
 pyOpt - https://github.com/madebr/pyOpt and http://pyopt.org/ (we hope that this website will be available again soon)
 pyswarm - https://pythonhosted.org/pyswarm/
 
+You will also need to have installed:
+- Microsoft MPI: https://www.microsoft.com/en-us/download/details.aspx?id=57467
+- Visual C++ Build Tools 2015: https://go.microsoft.com/fwlink/?LinkId=691126
+
 I) Easy installation
 
 	This way only works if you are using your root environement in anaconda, if you created a new environement go to "II) Manual installation".
-	For unexperienced Python users (or for the lazy ones) we propose the following procedure to prepare your PC to run the code on it:
+	For unexperienced Python users (or for the lazy ones) we propose the fallowing procedure to prepare your PC to run the code on it:
 
-	- If you have Anaconda2 with python3:
+	- If you have Anaconda2 with python3 (<=3.6):
 	  1) Donwload the following package: https://github.com/madebr/pyOpt
 	  2) Extract it in the fit@TDS folder.
 	  3) Run "PackagesInstallerPython3" with admin privileges.
@@ -54,7 +58,7 @@ II) Manual installation
 	6) Anaconda distribution includes the Anaconda Prompt which we suggest to use for the installation of the pyOpt and pyswarm packages:
 	pyOpt is an object-oriented framework for formulating and solving nonlinear constrained optimization problems. It can be installed as follows:
 	- If you have python 2 you can run the following command in the terminal: conda install -c mutirri pyopt
-	- If you have python 3 (<=3.6) you need to do as follow:
+	- If you have python 3 you need to do as follow:
 		1) Donwload the following package: https://github.com/madebr/pyOpt
 		2) Extract the folder "pyOpt-master" in a known location.
 		3) Open the terminal (anaconda prompt) and run the following command: cd "Path to pyOpt-master"
@@ -103,6 +107,8 @@ IV) ISSUES
 	   To correct this you need to go to the folder where you installed anaconda (usually C:\ProgramData\Anaconda2 or C:\Users\"your user"\.conda\envs\"your environement" if you have different environements)
 	   Then go to "path anaconda"\Lib\site-packages\pyopt\pyALPSO and open the alpso_spm.py script (you may need admin privileges to modify the file).
 	   Finally change the line 108 from "elif (mpi4py.__version__[0] == '1'):" to "else".
+
+
 
 
 
