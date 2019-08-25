@@ -12,7 +12,8 @@ You will also need to have installed:
 
 I) Easy installation
 
-	This way only works if you are using your root environement in anaconda, if you created a new environement go to "II) Manual installation".
+	This way only works if you are using your root environement in anaconda and the installation path of Anaconda is C:\ProgramData\Anaconda2.
+        If you created a new environement go to "II) Manual installation".
 	For unexperienced Python users (or for the lazy ones) we propose the fallowing procedure to prepare your PC to run the code on it:
 
 	- If you have Anaconda2 with python3 (<=3.6):
@@ -48,9 +49,9 @@ II) Manual installation
 	* MinGW compiler (other c/FORTRAN compiler may also be used)
 	* Tkinter (for GUI)
 	[If this step does not work properly, one can add the package using the anaconda prompt and these command lines :
-	conda install mpi4py
-	conda install Swig
-	conda install MinGW 
+	conda install -c anaconda mpi4py
+	conda install -c anaconda Swig
+	conda install -c anaconda MinGW
 	conda install -c anaconda tk
 	If you have problem with installation of mpi4py, fit@tds will work perfectly without, this is just an option, please just commant the line with comment # this can be commented if mpi4py was not installed successfully]
 
@@ -80,7 +81,8 @@ III) Using fit@TDS
 	
 	1) From file (easy way)
 
-	   This way only works if you are using your root environement in anaconda, if you created a new environement go to the next section "2) From the terminal (AnacondaPrompt)"
+	   This way only works if you are using your root environement in anaconda and the installation path of Anaconda is C:\ProgramData\Anaconda2.
+           If you created a new environement go to the next section "2) From the terminal (AnacondaPrompt)"
 	   You can use the "FitTDSeasy" and follow the instructions to use fit@TDS.
 	   
 
@@ -107,11 +109,3 @@ IV) ISSUES
 	   To correct this you need to go to the folder where you installed anaconda (usually C:\ProgramData\Anaconda2 or C:\Users\"your user"\.conda\envs\"your environement" if you have different environements)
 	   Then go to "path anaconda"\Lib\site-packages\pyopt\pyALPSO and open the alpso_spm.py script (you may need admin privileges to modify the file).
 	   Finally change the line 108 from "elif (mpi4py.__version__[0] == '1'):" to "else".
-
-
-
-
-
-
-
-
