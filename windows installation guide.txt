@@ -1,7 +1,7 @@
 fit@TDS Installation guide for windows
 
 
-To use the fit@TDS code on Windows one will need Python version 2.7 or higher (<=3.6) with a number of properly installed packages:
+To use the fit@TDS code on Windows one will need Python version 2.7 or higher (<=3.7) with a number of properly installed packages:
 NumPy - http://www.numpy.org/
 pyOpt - https://github.com/madebr/pyOpt and http://pyopt.org/ (we hope that this website will be available again soon)
 pyswarm - https://pythonhosted.org/pyswarm/
@@ -10,7 +10,7 @@ You will also need to have installed:
 - Microsoft MPI: https://www.microsoft.com/en-us/download/details.aspx?id=57467
 - Visual C++ Build Tools 2015: https://go.microsoft.com/fwlink/?LinkId=691126
 
-We strongly recommend to install Fit@TDS with python 3.6 to have a smoother installation.
+We recommend you to install Anaconda3 with python 3.7 to have a less complicated installation process.
 
 I) Easy installation
 
@@ -18,7 +18,7 @@ I) Easy installation
         If you created a new environement go to "II) Manual installation".
 	For unexperienced Python users (or for the lazy ones) we propose the fallowing procedure to prepare your PC to run the code on it:
 
-	- If you have Anaconda2 with python3 (<=3.6):
+	- If you have Anaconda3 with python3 (<=3.7):
 	  1) Donwload the following package: https://github.com/madebr/pyOpt
 	  2) Extract it in the fit@TDS folder.
 	  3) Run "PackagesInstallerPython3" with admin privileges.
@@ -38,7 +38,7 @@ II) Manual installation
 	1) Check that Python and/or Anaconda are not installed on your PC, otherwise we advise to uninstall the existing version so on not to get any misleading dependencies after the following steps. Reboot the PC.
 
 	2) We advise to use Anaconda - a free and open source distribution of the Python programming language, which includes a number of useful programs and allows an easy package management.
-	Download the Anaconda installer with a Python version inferior or equal to 3.6.8 for Windows respecting the bit architecture of your processor: https://www.anaconda.com/download/
+	Download the Anaconda installer with a Python version inferior or equal to 3.7 for Windows respecting the bit architecture of your processor: https://www.anaconda.com/download/
 
 	3) Run the installer. We advise to do it under administrator rights. We suggest to install anaconda for all users on the PC and to accept the destination folder (normally C:\ProgramData\Anaconda2) proposed by the installer. 
 	We also suggest not to accept any of the advanced options or add-ons during the installation process. Reboot the PC after the installation is over.
@@ -51,9 +51,9 @@ II) Manual installation
 	* MinGW compiler (other c/FORTRAN compiler may also be used)
 	* Tkinter (for GUI)
 	[If this step does not work properly, one can add the package using the anaconda prompt and these command lines :
-	conda install -c anaconda mpi4py
 	conda install -c anaconda Swig
 	conda install -c anaconda MinGW
+	pip install mpi4py
 	conda install -c anaconda tk
 	If you have problem with installation of mpi4py, fit@tds will work perfectly without, this is just an option, please just commant the line with comment # this can be commented if mpi4py was not installed successfully]
 
@@ -111,3 +111,9 @@ IV) ISSUES
 	   To correct this you need to go to the folder where you installed anaconda (usually C:\ProgramData\Anaconda2 or C:\Users\"your user"\.conda\envs\"your environement" if you have different environements)
 	   Then go to "path anaconda"\Lib\site-packages\pyopt\pyALPSO and open the alpso_spm.py script (you may need admin privileges to modify the file).
 	   Finally change the line 108 from "elif (mpi4py.__version__[0] == '1'):" to "else".
+
+
+
+
+
+

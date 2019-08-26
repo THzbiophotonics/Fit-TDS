@@ -6,7 +6,7 @@ call conda activate
 
 call conda install -c anaconda numpy
 
-call conda install -c anaconda mpi4py
+call pip install mpi4py
 
 call conda install -c anaconda Swig
 

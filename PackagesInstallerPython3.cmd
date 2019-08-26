@@ -1,12 +1,12 @@
-call set Path=%Path%;C:\ProgramData\Anaconda2
-call set Path=%Path%;C:\ProgramData\Anaconda2\condabin
-call set Path=%Path%;C:\ProgramData\Anaconda2\Scripts
+call set Path=%Path%;C:\ProgramData\Anaconda3
+call set Path=%Path%;C:\ProgramData\Anaconda3\condabin
+call set Path=%Path%;C:\ProgramData\Anaconda3\Scripts
 
 call conda activate
 
 call conda install -c anaconda numpy
 
-call conda install -c anaconda mpi4py
+call pip install mpi4py
 
 call conda install -c anaconda Swig
 
