@@ -47,7 +47,8 @@ try:
     if myrank == 0:
         print("Number of process used: " + str (size) + '\n')
 except: 
-    raise ImportError('mpi4py is required for parallelization') 
+    print('mpi4py is required for parallelization')
+    myrank=0
 
 
 #end
@@ -750,10 +751,13 @@ if myrank == 0:
 
 if myrank != 0:
     z=pathwithsample=pathwithoutsample=None
-    
-z = comm.bcast(z, root=0)
-pathwithsample = comm.bcast(pathwithsample, root=0)
-pathwithoutsample = comm.bcast(pathwithoutsample, root=0)
+
+try:
+    z = comm.bcast(z, root=0)
+    pathwithsample = comm.bcast(pathwithsample, root=0)
+    pathwithoutsample = comm.bcast(pathwithoutsample, root=0)
+except:
+    print("No parallelization")
 
 mesdata=np.loadtxt(pathwithsample)    ## We load the signal of the measured pulse with sample
 myinputdatafromfile=inputdatafromfile
@@ -908,20 +912,23 @@ while iter_opt:
         algo=lb=up=drudeinput=swarmsize=maxiter=zvariable=mymodelstruct=isdrude=n=myinputdata=z=pathwithoutsample=pathwithsample=None
     
     ## We broadcast the variables from the master node to the other nodes
-    algo = comm.bcast(algo, root=0)
-    lb = comm.bcast(lb, root=0)   
-    drudeinput = comm.bcast(drudeinput, root=0) 
-    up = comm.bcast(up, root=0) 
-    swarmsize= comm.bcast(swarmsize, root=0)
-    maxiter= comm.bcast(maxiter, root=0)
-    zvariable = comm.bcast(zvariable, root=0)
-    mymodelstruct = comm.bcast(mymodelstruct, root=0)
-    isdrude = comm.bcast(isdrude, root=0)
-    n = comm.bcast(n, root=0)
-    myinputdata = comm.bcast(myinputdata, root=0) 
-    z = comm.bcast(z, root=0)
-    pathwithoutsample = comm.bcast(pathwithoutsample, root=0)
-    pathwithsample = comm.bcast(pathwithsample, root=0)
+    try:
+        algo = comm.bcast(algo, root=0)
+        lb = comm.bcast(lb, root=0)   
+        drudeinput = comm.bcast(drudeinput, root=0) 
+        up = comm.bcast(up, root=0) 
+        swarmsize= comm.bcast(swarmsize, root=0)
+        maxiter= comm.bcast(maxiter, root=0)
+        zvariable = comm.bcast(zvariable, root=0)
+        mymodelstruct = comm.bcast(mymodelstruct, root=0)
+        isdrude = comm.bcast(isdrude, root=0)
+        n = comm.bcast(n, root=0)
+        myinputdata = comm.bcast(myinputdata, root=0) 
+        z = comm.bcast(z, root=0)
+        pathwithoutsample = comm.bcast(pathwithoutsample, root=0)
+        pathwithsample = comm.bcast(pathwithsample, root=0)
+    except:
+        print("No parallelization")
     
     ## Optimization dans le cas PyOpt swarm particle ALPSO without parallelization (also works with parallelization)
     if algo>1:
@@ -999,7 +1006,10 @@ while iter_opt:
           
     if myrank!=0:
         iter_opt=None
-    iter_opt=comm.bcast(iter_opt,root=0)
+    try:
+        iter_opt=comm.bcast(iter_opt,root=0)
+    except:
+        print("No parallelization")
     
 
     
