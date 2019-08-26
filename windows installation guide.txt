@@ -104,13 +104,17 @@ III) Using fit@TDS
 
 IV) ISSUES
 
-	1) h_start = Bcast(h_start, root=0)
+	1) Error: IPOPT shared library failed to import
+	   This is normal and fit@TDS will work properly.
+
+	2) h_start = Bcast(h_start, root=0)
 	   UnboundLocalError: local variable 'Bcast' referenced before assignment
 
 	   This is a common error because the pyOpt library installed has a little bug with the pyAlpso script.
 	   To correct this you need to go to the folder where you installed anaconda (usually C:\ProgramData\Anaconda2 or C:\Users\"your user"\.conda\envs\"your environement" if you have different environements)
 	   Then go to "path anaconda"\Lib\site-packages\pyopt\pyALPSO and open the alpso_spm.py script (you may need admin privileges to modify the file).
 	   Finally change the line 108 from "elif (mpi4py.__version__[0] == '1'):" to "else".
+	  
 
 
 
