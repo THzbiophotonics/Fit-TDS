@@ -2,7 +2,7 @@ matplotlib==3.2.1
 mpi4py==3.0.3
 numba==0.48.0
 numpy==1.18.2
-Pillow==7.1.2
+Pillow==6.2.2
 PyQt5==5.14.0
 PyQt5-sip==12.7.0
 pyswarm==0.6
