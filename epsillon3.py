@@ -1,4 +1,4 @@
-# =============================================================================
+ # =============================================================================
 # Standard Python modules
 # =============================================================================
 import os, sys, time, math
@@ -15,7 +15,7 @@ from scipy.io.matlab import mio
 
 # from scipy import optimize
 from scipy.optimize import minimize
-
+from numba import jit
 ###############################################################################
 ###############################################################################
 j = 1j
@@ -97,8 +97,7 @@ def inverseProblem(freq, fctTrans, thick, FP, init, limitUp):
 
     return ref_index
 
-
-def dielcal(mytransferfunction, z, myglobalparameters):
+def dielcal(mytransferfunction, z, myglobalparameters,scattering=None):
     global zz, mytransferfunction2
 
 

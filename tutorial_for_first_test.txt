@@ -1,4 +1,23 @@
-One can use input.txt and output.txt files
-the thickness of the artificial sample given the output  file is 5 mm, its epsilon 4, it has one Lorentz Oscillators at 500 GHz with a width of 100 GHz. Its oscillators strentgh is 0.001. There is no Drude term to find.
+The file to run is fit_TDSg.py
+One can do it with the command prompt:
 
-If one take 1% of uncertainty on the thickness and +-50% on the other parameters he should find the good result in about 1 minute.
+cd C:\filePath\fit_TDS
+python fit_TDSg.py
+
+Initialisation:
+
+The thickness of the artificial sample given the output  file is 5 mm. One can take 1% of uncertainty.
+One can use input.txt and output.txt files
+
+Model parameters:
+You can take any algorithm, a swarmsize of 1000 and 20 iterations.
+One can use the file example_input_parameters.txt:
+- Photonic structure is Transmission Fabry-Perot
+- Don't fit thickness
+- No Drude term to find
+- One Lorentz oscillator
+- No Debye oscillator
+If you don't want to use file, you can take +-50% of uncertainty on the other parameters
+it has one Lorentz Oscillators at 500 GHz with a width of 100 GHz. Its oscillators strentgh is 0.001. There is no Drude term to find.
+
+You should find the good result in about 1 minute.
