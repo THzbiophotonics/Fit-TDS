@@ -1,5 +1,9 @@
+matplotlib==3.2.1
+mpi4py==3.0.3
+numba==0.48.0
+numpy==1.18.2
+Pillow==5.4.1
+PyQt5==5.14.0
+PyQt5-sip==12.7.0
 pyswarm==0.6
-numpy==1.15.1
-matplotlib==2.2.3
-scipy==1.1.0
-mpi4py==3.0.0
+scipy==1.4.1
