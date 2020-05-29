@@ -144,11 +144,13 @@ def Drude(drudeinput):
         w0=drudeinput[i*3+2+interm]*2*np.pi
         gamma =drudeinput[i*3+3+interm]*2*np.pi
         eps =eps+ chi*w0**2/(w0**2+j*gamma* myglobalparameters.w- myglobalparameters.w**2)
+    interm2=interm2+3*n
 
     for iDebye in range(0,nDebye):  ## Debye term
         chi=drudeinput[iDebye*2+1+interm]
         w0=drudeinput[iDebye*2+2+interm]*2*np.pi
         eps =eps+ chi/(1+j*myglobalparameters.w/w0)
+    interm2=interm2+2*nDebye
 
     return eps
 
@@ -363,11 +365,12 @@ if algo>0:
         opt_prob.addVar(f'chi_{i}','c',lower=lb[1+interm2+3*i],upper=up[1+interm2+3*i],value=drudeinput[1+interm2+3*i])#pour drude
         opt_prob.addVar(f'w_{i}','c',lower=lb[2+interm2+3*i],upper=up[2+interm2+3*i],value=drudeinput[2+interm2+3*i])#pour drude
         opt_prob.addVar(f'gamma_{i}','c',lower=lb[3+interm2+3*i],upper=up[3+interm2+3*i],value=drudeinput[3+interm2+3*i])#pour drude
-
+    interm2=interm2+3*n
+	
     for iDebye in range(0,nDebye):
         opt_prob.addVar(f'chi_{iDebye}','c',lower=lb[1+interm2+3*iDebye],upper=up[1+interm2+3*iDebye],value=drudeinput[1+interm2+3*iDebye])#pour drude
         opt_prob.addVar(f'w_{iDebye}','c',lower=lb[2+interm2+3*iDebye],upper=up[2+interm2+3*iDebye],value=drudeinput[2+interm2+3*iDebye])#pour drude
-
+    interm2=interm2+2*nDebye
 
     opt_prob.addObj('f')
     #opt_prob.addCon('g1','i') #possibility to add constraintes
