@@ -144,13 +144,13 @@ def Drude(drudeinput):
         w0=drudeinput[i*3+2+interm]*2*np.pi
         gamma =drudeinput[i*3+3+interm]*2*np.pi
         eps =eps+ chi*w0**2/(w0**2+j*gamma* myglobalparameters.w- myglobalparameters.w**2)
-    interm2=interm2+3*n
+    interm=interm+3*n
 
     for iDebye in range(0,nDebye):  ## Debye term
         chi=drudeinput[iDebye*2+1+interm]
         w0=drudeinput[iDebye*2+2+interm]*2*np.pi
         eps =eps+ chi/(1+j*myglobalparameters.w/w0)
-    interm2=interm2+2*nDebye
+    interm=interm+2*nDebye
 
     return eps
 
