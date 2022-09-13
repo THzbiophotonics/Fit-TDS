@@ -1,0 +1,23 @@
+1. There is a problem with the installation of pyOpt package.
+--> Did you reboot your computer after installing pyOpt?
+Did you look in the Anaconda environment if pyOpt was correctly installed?
+Otherwise there may be a problem in the installation of MinGW fortran compiler. 
+Installation via anaconda prompt does not always work, sometimes you have to download it directly from google to install it. 
+The following link may be useful to you: https://www.01net.com/telecharger/windows/Programmation/creation/fiches/117742.html
+
+2. Is there any specific form requirement for the data?
+--> The data is in .txt. It just takes two columns (time and the electric field). 
+Care must be taken that the time window is the same in the case of the reference and the sample.
+
+3. Is it possible to just eliminate the FP effect without using the optimization part?
+--> You can choose to take the FP effect into account or not during your optimizations, but it will not be possible to eliminate it. 
+The FP effect is very useful so that the software can find the right parameters when optimizing, it is generally advisable to keep it. 
+If you don't want to have the FP, you can cut your time trace and do the fitting without.
+
+4. How to choose the parameters' values ?
+--> You can do a first test using no oscillator to fit only the permittivity and the thickness in order to have an idea of what to expect. 
+Then introduce one or more oscillators in a given model. For the parameters of your oscillator, you have to put a central value then an interval with a minimum and a maximum. 
+The parameters must be chosen in such a way as to guide fit@TDS. If you put values too far from reality it would be more difficult to fit. 
+We advise you to rely on the literature if the data is already available.
+You can try to put different values, submit and click on preview to better understand the physical background of these parameters.
+As your optimizations progress, you will be able to refine your intervals and your values. 
