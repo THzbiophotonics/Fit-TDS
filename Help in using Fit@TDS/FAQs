@@ -3,7 +3,7 @@
 Did you look in the Anaconda environment if pyOpt was correctly installed?
 Otherwise there may be a problem in the installation of MinGW fortran compiler. 
 Installation via anaconda prompt does not always work, sometimes you have to download it directly from google to install it. 
-The following link may be useful to you: https://www.01net.com/telecharger/windows/Programmation/creation/fiches/117742.html
+The following link may be useful to you: https://sourceforge.net/projects/mingw/
 
 2. Is there any specific form requirement for the data?
 --> The data is in .txt. It just takes two columns (time and the electric field). 
