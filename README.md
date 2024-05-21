@@ -1,7 +1,7 @@
 # Fit-TDS
 This repository is dedicated to the fit@TDS software. A python code aiming at the retrieving of material parameter from a TeraHertz time domain spectroscopy (TDS) measurements from a fit in the time domain.
 
-To use the program, you should have a python3 environment, with packages listed in "requirement.txt" installed.
+To use the program, you should have a python3 environment, with the packages listed in "requirement.txt" installed.
 Then run the file "fit_TDSg.py" with python3 in the fit_TDS folder.
 
 
